@@ -33,10 +33,10 @@ const options = [
   {
     id: 'waterfall',
     title: 'Waterfall',
-    mp4: '/videos/mixkit-waterfall-in-forest-2213-full-hd.mp4',
-    webm: '/videos/mixkit-waterfall-in-forest-2213-full-hd.webm',
-    poster: '/videos/mixkit-waterfall-in-forest-2213-full-hd-poster.jpg',
-    audio: '/audio/waterfall-loop.mp3'
+    mp4: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd.mp4`,
+    webm: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd.webm`,
+    poster: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd-poster.jpg`,
+    audio: `${import.meta.env.BASE_URL}audio/waterfall-loop.mp3`
   }
 ]
 
