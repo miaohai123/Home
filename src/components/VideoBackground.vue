@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 
 const MOBILE_MAX = 640
 const REDUCED_MOTION = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -46,10 +46,6 @@ const audioEl = ref(null)
 const selectedIndex = ref(0)
 const hasIntersected = ref(false)
 const isMobile = typeof window !== 'undefined' && window.innerWidth <= MOBILE_MAX
-// lazy load state
-const videoLoaded = ref(false)
-const isPreloading = ref(false)
-let preloaderVideo = null
 const audioOn = ref(false)
 
 const current = computed(() => options[selectedIndex.value])
@@ -58,54 +54,8 @@ const showVideo = computed(() => {
   if (!hasIntersected.value) return false
   if (REDUCED_MOTION) return false
   if (isMobile) return false
-  if (!videoLoaded.value) return false
   return !!(current.value && (current.value.mp4 || current.value.webm))
 })
-
-function startPreload() {
-  if (isPreloading.value || videoLoaded.value) return
-  const src = (typeof document !== 'undefined') ? (document.createElement('video')) : null
-  if (!src) return
-  isPreloading.value = true
-  preloaderVideo = src
-  preloaderVideo.preload = 'auto'
-  preloaderVideo.muted = true
-  preloaderVideo.playsInline = true
-  // choose preferred source
-  const preferred = (preloaderVideo.canPlayType && preloaderVideo.canPlayType('video/webm') ? 'webm' : 'mp4')
-  const s = document.createElement('source')
-  s.src = preferred === 'webm' && current.value.webm ? current.value.webm : current.value.mp4
-  s.type = preferred === 'webm' ? 'video/webm' : 'video/mp4'
-  preloaderVideo.appendChild(s)
-  const onReady = async () => {
-    preloaderVideo.removeEventListener('canplaythrough', onReady)
-    preloaderVideo.removeEventListener('loadeddata', onReady)
-    videoLoaded.value = true
-    isPreloading.value = false
-    try {
-      await nextTick()
-      if (videoEl.value) {
-        const p = videoEl.value.play()
-        if (p && p.catch) p.catch(() => { /* ignore */ })
-      }
-    } catch (e) { /* ignore */ }
-  }
-  preloaderVideo.addEventListener('canplaythrough', onReady)
-  preloaderVideo.addEventListener('loadeddata', onReady)
-  // start loading
-  try { preloaderVideo.load() } catch (e) { onReady() }
-}
-
-function cancelPreload() {
-  if (!preloaderVideo) return
-  try {
-    preloaderVideo.pause()
-    preloaderVideo.src = ''
-    preloaderVideo.load()
-  } catch (e) {}
-  preloaderVideo = null
-  isPreloading.value = false
-}
 
 watch(current, () => {
   // reload audio when background option changes
@@ -205,12 +155,17 @@ onMounted(() => {
     for (const e of entries) {
       if (e.isIntersecting) {
         hasIntersected.value = true
-        // 开始预加载视频，完成后再把 video 元素显示并播放
-        startPreload()
-        // 尝试预加载音频
-        if (audioEl.value) {
-          audioEl.value.load()
-        }
+        // 尝试播放静音视频以满足 autoplay
+        requestAnimationFrame(() => {
+          if (videoEl.value && showVideo.value) {
+            const p = videoEl.value.play()
+            if (p && p.catch) p.catch(() => { /* ignore autoplay errors */ })
+          }
+          // 尝试预加载音频
+          if (audioEl.value) {
+            audioEl.value.load()
+          }
+        })
       }
     }
   }, { threshold: 0.25 })
