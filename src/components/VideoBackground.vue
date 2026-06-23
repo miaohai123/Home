@@ -29,14 +29,16 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 const MOBILE_MAX = 640
 const REDUCED_MOTION = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+const publicBase = import.meta.env.BASE_URL || '/'
+
 const options = [
   {
     id: 'waterfall',
     title: 'Waterfall',
-    mp4: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd.mp4`,
-    webm: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd.webm`,
-    poster: `${import.meta.env.BASE_URL}videos/mixkit-waterfall-in-forest-2213-full-hd-poster.jpg`,
-    audio: `${import.meta.env.BASE_URL}audio/waterfall-loop.mp3`
+    mp4: `${publicBase}videos/mixkit-waterfall-in-forest-2213-full-hd.mp4`,
+    webm: null,
+    poster: null,
+    audio: `${publicBase}audio/waterfall-loop.mp3`
   }
 ]
 
@@ -49,7 +51,7 @@ const isMobile = typeof window !== 'undefined' && window.innerWidth <= MOBILE_MA
 const audioOn = ref(false)
 
 const current = computed(() => options[selectedIndex.value])
-const audioSrc = computed(() => current.value?.audio || '/audio/waterfall-loop.mp3')
+const audioSrc = computed(() => current.value?.audio || `${publicBase}audio/waterfall-loop.mp3`)
 const showVideo = computed(() => {
   if (!hasIntersected.value) return false
   if (REDUCED_MOTION) return false
